@@ -13,7 +13,7 @@ const Header: React.FC = () => {
             </h1>
           </div>
           <div className="text-sm text-gray-400 font-mono">
-            2025 Season Simulation
+            Season Simulation
           </div>
         </div>
       </div>

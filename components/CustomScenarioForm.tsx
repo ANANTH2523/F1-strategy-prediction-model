@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RaceScenario, StartingGridEntry, TireCompound } from '../types';
+import { RaceScenario, StartingGridEntry, TireCompound, TrackDegradation, DrivingStyle } from '../types';
 
 interface CustomScenarioFormProps {
   onSubmit: (scenario: RaceScenario) => void;
@@ -10,23 +10,28 @@ const CustomScenarioForm: React.FC<CustomScenarioFormProps> = ({ onSubmit, isLoa
   const [track, setTrack] = useState('Silverstone');
   const [weather, setWeather] = useState('Sunny');
   const [raceLaps, setRaceLaps] = useState('52');
+  const [trackDegradation, setTrackDegradation] = useState<TrackDegradation>('Medium');
   const [startingGrid, setStartingGrid] = useState<StartingGridEntry[]>([
-    { position: 1, driver: 'L. Norris' }, { position: 2, driver: 'M. Verstappen' },
-    { position: 3, driver: 'C. Leclerc' }, { position: 4, driver: 'O. Piastri' },
-    { position: 5, driver: 'G. Russell' }, { position: 6, driver: 'L. Hamilton' },
-    { position: 7, driver: 'C. Sainz' }, { position: 8, driver: 'S. Perez' },
-    { position: 9, driver: 'F. Alonso' }, { position: 10, driver: 'Y. Tsunoda' },
-    { position: 11, driver: 'L. Stroll' }, { position: 12, driver: 'D. Ricciardo' },
-    { position: 13, driver: 'A. Albon' }, { position: 14, driver: 'P. Gasly' },
-    { position: 15, driver: 'E. Ocon' }, { position: 16, driver: 'K. Magnussen' },
-    { position: 17, driver: 'N. Hulkenberg' }, { position: 18, driver: 'V. Bottas' },
-    { position: 19, driver: 'G. Zhou' }, { position: 20, driver: 'L. Sargeant' },
+    { position: 1, driver: 'L. Norris', drivingStyle: 'Aggressive' }, { position: 2, driver: 'M. Verstappen', drivingStyle: 'Aggressive' },
+    { position: 3, driver: 'C. Leclerc', drivingStyle: 'Aggressive' }, { position: 4, driver: 'O. Piastri', drivingStyle: 'Balanced' },
+    { position: 5, driver: 'G. Russell', drivingStyle: 'Balanced' }, { position: 6, driver: 'L. Hamilton', drivingStyle: 'Smooth' },
+    { position: 7, driver: 'C. Sainz', drivingStyle: 'Smooth' }, { position: 8, driver: 'S. Perez', drivingStyle: 'Smooth' },
+    { position: 9, driver: 'F. Alonso', drivingStyle: 'Aggressive' }, { position: 10, driver: 'Y. Tsunoda', drivingStyle: 'Aggressive' },
+    { position: 11, driver: 'L. Stroll', drivingStyle: 'Balanced' }, { position: 12, driver: 'D. Ricciardo', drivingStyle: 'Smooth' },
+    { position: 13, driver: 'A. Albon', drivingStyle: 'Balanced' }, { position: 14, driver: 'P. Gasly', drivingStyle: 'Aggressive' },
+    { position: 15, driver: 'E. Ocon', drivingStyle: 'Balanced' }, { position: 16, driver: 'K. Magnussen', drivingStyle: 'Aggressive' },
+    { position: 17, driver: 'N. Hulkenberg', drivingStyle: 'Smooth' }, { position: 18, driver: 'V. Bottas', drivingStyle: 'Smooth' },
+    { position: 19, driver: 'G. Zhou', drivingStyle: 'Balanced' }, { position: 20, driver: 'L. Sargeant', drivingStyle: 'Balanced' },
   ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleGridChange = (index: number, driver: string) => {
+  const handleGridChange = (index: number, field: 'driver' | 'drivingStyle', value: string) => {
     const newGrid = [...startingGrid];
-    newGrid[index].driver = driver;
+    if (field === 'driver') {
+        newGrid[index].driver = value;
+    } else {
+        newGrid[index].drivingStyle = value as DrivingStyle;
+    }
     setStartingGrid(newGrid);
   };
 
@@ -60,6 +65,7 @@ const CustomScenarioForm: React.FC<CustomScenarioFormProps> = ({ onSubmit, isLoa
         raceLaps: parseInt(raceLaps, 10),
         availableTires: finalTires,
         startingGrid,
+        trackDegradation,
       };
       onSubmit(scenario);
     }
@@ -83,19 +89,34 @@ const CustomScenarioForm: React.FC<CustomScenarioFormProps> = ({ onSubmit, isLoa
           </select>
         </div>
       </div>
-       <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
           <label htmlFor="raceLaps" className="block text-sm font-medium text-gray-300">Race Laps</label>
           <input type="number" id="raceLaps" value={raceLaps} onChange={e => setRaceLaps(e.target.value)} disabled={isLoading} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50" />
           {errors.raceLaps && <p className="mt-1 text-xs text-red-400">{errors.raceLaps}</p>}
         </div>
+        <div>
+          <label htmlFor="trackDegradation" className="block text-sm font-medium text-gray-300">Track Degradation</label>
+          <select id="trackDegradation" value={trackDegradation} onChange={e => setTrackDegradation(e.target.value as TrackDegradation)} disabled={isLoading} className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50">
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+       </div>
       
       <div>
         <label className="block text-sm font-medium text-gray-300">Starting Grid (20 Drivers)</label>
-        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 max-h-64 overflow-y-auto pr-2">
+        <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-2 max-h-64 overflow-y-auto pr-2">
           {startingGrid.map((driver, index) => (
             <div key={index} className="flex items-center gap-2">
               <span className="font-bold text-gray-400 w-8 text-right">P{driver.position}</span>
-              <input type="text" value={driver.driver} onChange={e => handleGridChange(index, e.target.value)} disabled={isLoading} className="flex-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50" />
+              <input type="text" value={driver.driver} onChange={e => handleGridChange(index, 'driver', e.target.value)} disabled={isLoading} className="flex-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50" />
+               <select value={driver.drivingStyle} onChange={e => handleGridChange(index, 'drivingStyle', e.target.value)} disabled={isLoading} className="bg-gray-700 border-gray-600 rounded-md text-white text-xs p-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50">
+                <option>Aggressive</option>
+                <option>Balanced</option>
+                <option>Smooth</option>
+              </select>
             </div>
           ))}
         </div>

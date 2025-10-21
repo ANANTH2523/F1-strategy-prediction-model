@@ -1,6 +1,11 @@
+export type DrivingStyle = 'Aggressive' | 'Smooth' | 'Balanced';
+export type TrackDegradation = 'Low' | 'Medium' | 'High';
+export type TireCondition = 'Fresh' | 'Good' | 'Worn' | 'Aged';
+
 export interface StartingGridEntry {
   position: number;
   driver: string;
+  drivingStyle: DrivingStyle;
 }
 
 export type TireCompound = 'Soft' | 'Medium' | 'Hard' | 'Intermediate' | 'Wet';
@@ -11,6 +16,7 @@ export interface RaceScenario {
   availableTires: TireCompound[];
   startingGrid: StartingGridEntry[];
   raceLaps: number;
+  trackDegradation: TrackDegradation;
 }
 
 export interface SavedScenario extends RaceScenario {
@@ -49,14 +55,22 @@ export interface StrategyAnalysis {
 }
 
 export interface RaceEvent {
-  type: 'PIT' | 'OVERTAKE' | 'FASTEST_LAP' | 'INFO' | 'DRS' | 'VSC' | 'MECHANICAL_ISSUE';
+  type: 'PIT' | 'OVERTAKE' | 'FASTEST_LAP' | 'INFO' | 'DRS' | 'VSC' | 'MECHANICAL_ISSUE' | 'TIRE_WEAR';
   description: string;
   severity?: 'minor' | 'moderate' | 'major';
 }
 
+export interface LapPositionData {
+  position: number;
+  driver: string;
+  tireCompound: TireCompound;
+  tireWear: number;
+  tireCondition: TireCondition;
+}
+
 export interface LapSimulation {
   lap: number;
-  positions: StartingGridEntry[];
+  positions: LapPositionData[];
   events: RaceEvent[];
 }
 

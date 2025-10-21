@@ -1,5 +1,5 @@
 {
   "name": "Copy of F1 Race Strategy Analyst",
-  "description": "An AI-powered tool to generate and analyze F1 race scenarios, providing optimal race strategies using simulated 2025 telemetry data.",
+  "description": "An AI-powered tool to generate and analyze F1 race scenarios, providing optimal race strategies using simulated telemetry data.",
   "requestFramePermissions": []
 }

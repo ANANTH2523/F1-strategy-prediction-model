@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { RaceScenario, TelemetryData, StrategyAnalysis, LapSimulation, StrategyPlan, SavedScenario, ChatMessage, TireCompound } from './types';
+import { RaceScenario, TelemetryData, StrategyAnalysis, LapSimulation, StrategyPlan, SavedScenario, ChatMessage, TireCompound, TrackDegradation } from './types';
 import { generateRaceScenarioAndTelemetry, analyzeRaceStrategy, generateTelemetryForScenario, simulateRace, askFollowUpQuestion } from './services/geminiService';
 import Header from './components/Header';
 import TelemetryChart from './components/TelemetryChart';
@@ -110,6 +110,7 @@ const App: React.FC = () => {
   const [mode, setMode] = useState<'AI' | 'Custom'>('AI');
   const [trackType, setTrackType] = useState<string>('Any');
   const [weatherPattern, setWeatherPattern] = useState<string>('Any');
+  const [trackDegradation, setTrackDegradation] = useState<TrackDegradation>('Medium');
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
@@ -139,7 +140,7 @@ const App: React.FC = () => {
     setIsLoadingScenario(true);
     resetState();
     try {
-      const { scenario, telemetry } = await generateRaceScenarioAndTelemetry({ trackType, weatherPattern });
+      const { scenario, telemetry } = await generateRaceScenarioAndTelemetry({ trackType, weatherPattern, trackDegradation });
       setRaceScenario(scenario);
       setTelemetryData(telemetry);
     } catch (err) {
@@ -147,7 +148,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoadingScenario(false);
     }
-  }, [trackType, weatherPattern]);
+  }, [trackType, weatherPattern, trackDegradation]);
   
   const handleCustomScenarioSubmit = useCallback(async (customScenario: RaceScenario) => {
     setIsLoadingScenario(true);
@@ -214,6 +215,20 @@ const App: React.FC = () => {
       setError("No active scenario to save.");
       return;
     }
+    
+    // Check if a scenario with the same core properties already exists
+    const isDuplicate = savedScenarios.some(s => 
+      s.track === raceScenario.track &&
+      s.weather === raceScenario.weather &&
+      s.raceLaps === raceScenario.raceLaps &&
+      JSON.stringify(s.startingGrid) === JSON.stringify(raceScenario.startingGrid)
+    );
+
+    if (isDuplicate) {
+      setError("An identical scenario has already been saved.");
+      return;
+    }
+
     try {
       const newSavedScenario: SavedScenario = {
         ...raceScenario,
@@ -223,6 +238,7 @@ const App: React.FC = () => {
       const updatedScenarios = [...savedScenarios, newSavedScenario];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedScenarios));
       setSavedScenarios(updatedScenarios);
+      setError(null); // Clear previous errors
     } catch (e) {
       setError("Failed to save scenario. Your browser's storage might be full.");
       console.error(e);
@@ -318,9 +334,9 @@ const App: React.FC = () => {
               {mode === 'AI' ? (
                 <div>
                   <p className="text-gray-400 mb-4">
-                    Guide the AI to generate a hypothetical 2025 F1 race scenario.
+                    Guide the AI to generate a hypothetical F1 race scenario.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div>
                         <label htmlFor="trackType" className="block text-sm font-medium text-gray-300 mb-1">Track Type</label>
                         <select id="trackType" value={trackType} onChange={e => setTrackType(e.target.value)} disabled={isButtonDisabled} className="w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-red-500 focus:border-red-500 sm:text-sm disabled:opacity-50">
@@ -337,6 +353,14 @@ const App: React.FC = () => {
                             <option>Predictable</option>
                             <option>Variable</option>
                             <option>Wet Race</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label htmlFor="trackDegradation" className="block text-sm font-medium text-gray-300 mb-1">Track Degradation</label>
+                        <select id="trackDegradation" value={trackDegradation} onChange={e => setTrackDegradation(e.target.value as TrackDegradation)} disabled={isButtonDisabled} className="w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-red-500 focus:border-red-500 sm:text-sm disabled:opacity-50">
+                            <option>Low</option>
+                            <option>Medium</option>
+                            <option>High</option>
                         </select>
                     </div>
                   </div>
@@ -366,16 +390,14 @@ const App: React.FC = () => {
                     >
                         {isLoadingStrategy ? 'Analyzing...' : 'Analyze Strategy'}
                     </button>
-                    {mode === 'Custom' && (
-                        <button
-                            onClick={handleSaveCurrentScenario}
-                            disabled={isButtonDisabled || savedScenarios.some(s => s.id === raceScenario.track + raceScenario.weather + raceScenario.raceLaps)}
-                            className="w-full flex items-center justify-center bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900"
-                        >
-                            <SaveIcon className="h-5 w-5 mr-2" />
-                            Save Current Scenario
-                        </button>
-                    )}
+                    <button
+                        onClick={handleSaveCurrentScenario}
+                        disabled={isButtonDisabled}
+                        className="w-full flex items-center justify-center bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                    >
+                        <SaveIcon className="h-5 w-5 mr-2" />
+                        Save Scenario
+                    </button>
                 </div>
               )}
               {error && <ErrorDisplay message={error} onDismiss={() => setError(null)} />}
@@ -396,6 +418,7 @@ const App: React.FC = () => {
               <div className="space-y-3 text-gray-300">
                 <p><strong>Track:</strong> {raceScenario.track}</p>
                 <p><strong>Weather:</strong> {raceScenario.weather}</p>
+                <p><strong>Track Degradation:</strong> <span className="font-semibold">{raceScenario.trackDegradation}</span></p>
                 <p><strong>Race Laps:</strong> {raceScenario.raceLaps}</p>
                 <p><strong>Available Tires:</strong> {raceScenario.availableTires.join(', ')}</p>
                 <div>
@@ -403,7 +426,7 @@ const App: React.FC = () => {
                   <div className="max-h-56 overflow-y-auto pr-2 mt-2">
                       <ol className="list-decimal list-inside space-y-1 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                           {raceScenario.startingGrid.map(d => 
-                              <li key={d.position}>{d.driver}</li>
+                              <li key={d.position}>{d.driver} <span className="text-xs text-gray-400">({d.drivingStyle})</span></li>
                           )}
                       </ol>
                   </div>
