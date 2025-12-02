@@ -1,18 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ReferenceLine } from 'recharts';
 import { TelemetryData } from '../types';
+import { getDriverTeamColor } from '../teamData';
 
 interface TelemetryChartProps {
   data: TelemetryData[];
   drivers: string[];
 }
 
-const DRIVER_COLORS = [
-  '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-  '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
-  '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
-  '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5'
-];
+// Removed hardcoded DRIVER_COLORS
+
 
 const METRIC_CONFIG = {
   lapTime: { name: 'Lap Time', yAxisId: 'left', unit: 's', lineStyle: '0' },
@@ -181,7 +178,7 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, drivers }) => {
                             type="monotone"
                             dataKey={dataKey}
                             name={`${driverLastName} ${config.name}`}
-                            stroke={DRIVER_COLORS[index % DRIVER_COLORS.length]}
+                            stroke={getDriverTeamColor(driver)}
                             strokeDasharray={config.lineStyle}
                             strokeWidth={2}
                             dot={false}
@@ -255,8 +252,8 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, drivers }) => {
                             <YAxis stroke="#A0AEC0" domain={['dataMin - 0.5', 'dataMax + 0.5']} />
                             <Tooltip content={<CustomTooltip />} />
                             <Legend />
-                            <Line type="monotone" dataKey={comparisonDrivers[0]} name={comparisonDrivers[0]} stroke={DRIVER_COLORS[0]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
-                            <Line type="monotone" dataKey={comparisonDrivers[1]} name={comparisonDrivers[1]} stroke={DRIVER_COLORS[1]} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey={comparisonDrivers[0]} name={comparisonDrivers[0]} stroke={getDriverTeamColor(comparisonDrivers[0])} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                            <Line type="monotone" dataKey={comparisonDrivers[1]} name={comparisonDrivers[1]} stroke={getDriverTeamColor(comparisonDrivers[1])} strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>

@@ -1,11 +1,19 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { RaceScenario, TelemetryData, StrategyAnalysis, LapSimulation, ChatMessage, TireCompound, TrackDegradation, DrivingStyle, TireCondition } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
-}
+let ai: GoogleGenAI | null = null;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+function getAIClient(): GoogleGenAI {
+  if (ai) return ai;
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable not set. Please set GEMINI_API_KEY or GOOGLE_AI_API_KEY in your Vercel project settings.");
+  }
+
+  ai = new GoogleGenAI({ apiKey });
+  return ai;
+}
 
 interface ScenarioGenerationOptions {
   trackType?: string;
@@ -41,7 +49,7 @@ const scenarioSchema = {
         },
         required: ['position', 'driver', 'drivingStyle']
       },
-      description: "All 20 drivers and their starting positions, including their driving style."
+      description: "All 22 drivers and their starting positions, including their driving style."
     },
     raceLaps: { type: Type.INTEGER, description: "Total number of laps for the race." }
   },
@@ -173,7 +181,8 @@ async function safeGenerateContent(modelName: string, prompt: string, schema?: o
             responseSchema: schema,
         } : {};
 
-        const result = await ai.models.generateContent({
+        const client = getAIClient();
+        const result = await client.models.generateContent({
             model: modelName,
             contents: prompt,
             config,
@@ -280,7 +289,19 @@ export async function generateRaceScenarioAndTelemetry(options: ScenarioGenerati
       - For a dry race, this array must be exactly ["Soft", "Medium", "Hard"].
       - For a wet or variable race, it must be ["Soft", "Medium", "Hard", "Intermediate", "Wet"].
       - Do NOT include C-ratings like C1, C2, etc., in this array field.
-  3.  Starting Grid: Create a full, plausible 20-driver starting grid for a recent F1 season. For each driver, you MUST assign a 'drivingStyle' from ["Aggressive", "Smooth", "Balanced"] based on their real-world reputation.
+  3.  Starting Grid: Create a full, plausible 22-driver starting grid for the 2026 F1 season. You MUST use the following confirmed lineup (11 teams, 22 drivers):
+      - McLaren: Norris, Piastri
+      - Red Bull: Verstappen, Hadjar
+      - Ferrari: Leclerc, Hamilton
+      - Mercedes: Russell, Antonelli
+      - Aston Martin: Alonso, Stroll
+      - Alpine: Gasly, Colapinto
+      - Williams: Albon, Sainz
+      - Haas: Bearman, Ocon
+      - Audi: Hulkenberg, Bortoleto
+      - Cadillac: Bottas, Perez
+      - Racing Bulls: Lawson, Lindblad
+      For each driver, you MUST assign a 'drivingStyle' from ["Aggressive", "Smooth", "Balanced"] based on their real-world reputation.
   4.  Track Degradation: Assign a 'trackDegradation' level from ["Low", "Medium", "High"] that is appropriate for the chosen track (e.g., Bahrain is High, Silverstone is Medium, Monaco is Low).
   `;
   

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { RaceScenario, StartingGridEntry, TireCompound, TrackDegradation, DrivingStyle } from '../types';
+import { TEAMS_2026 } from '../teamData';
 
 interface CustomScenarioFormProps {
   onSubmit: (scenario: RaceScenario) => void;
@@ -11,18 +12,14 @@ const CustomScenarioForm: React.FC<CustomScenarioFormProps> = ({ onSubmit, isLoa
   const [weather, setWeather] = useState('Sunny');
   const [raceLaps, setRaceLaps] = useState('52');
   const [trackDegradation, setTrackDegradation] = useState<TrackDegradation>('Medium');
-  const [startingGrid, setStartingGrid] = useState<StartingGridEntry[]>([
-    { position: 1, driver: 'L. Norris', drivingStyle: 'Aggressive' }, { position: 2, driver: 'M. Verstappen', drivingStyle: 'Aggressive' },
-    { position: 3, driver: 'C. Leclerc', drivingStyle: 'Aggressive' }, { position: 4, driver: 'O. Piastri', drivingStyle: 'Balanced' },
-    { position: 5, driver: 'G. Russell', drivingStyle: 'Balanced' }, { position: 6, driver: 'L. Hamilton', drivingStyle: 'Smooth' },
-    { position: 7, driver: 'C. Sainz', drivingStyle: 'Smooth' }, { position: 8, driver: 'S. Perez', drivingStyle: 'Smooth' },
-    { position: 9, driver: 'F. Alonso', drivingStyle: 'Aggressive' }, { position: 10, driver: 'Y. Tsunoda', drivingStyle: 'Aggressive' },
-    { position: 11, driver: 'L. Stroll', drivingStyle: 'Balanced' }, { position: 12, driver: 'D. Ricciardo', drivingStyle: 'Smooth' },
-    { position: 13, driver: 'A. Albon', drivingStyle: 'Balanced' }, { position: 14, driver: 'P. Gasly', drivingStyle: 'Aggressive' },
-    { position: 15, driver: 'E. Ocon', drivingStyle: 'Balanced' }, { position: 16, driver: 'K. Magnussen', drivingStyle: 'Aggressive' },
-    { position: 17, driver: 'N. Hulkenberg', drivingStyle: 'Smooth' }, { position: 18, driver: 'V. Bottas', drivingStyle: 'Smooth' },
-    { position: 19, driver: 'G. Zhou', drivingStyle: 'Balanced' }, { position: 20, driver: 'L. Sargeant', drivingStyle: 'Balanced' },
-  ]);
+  const [startingGrid, setStartingGrid] = useState<StartingGridEntry[]>(() => {
+    const allDrivers = Object.values(TEAMS_2026).flatMap(team => team.drivers);
+    return allDrivers.map((driver, index) => ({
+      position: index + 1,
+      driver,
+      drivingStyle: 'Balanced' // Default style
+    }));
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleGridChange = (index: number, field: 'driver' | 'drivingStyle', value: string) => {
@@ -106,7 +103,7 @@ const CustomScenarioForm: React.FC<CustomScenarioFormProps> = ({ onSubmit, isLoa
        </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-300">Starting Grid (20 Drivers)</label>
+        <label className="block text-sm font-medium text-gray-300">Starting Grid (22 Drivers)</label>
         <div className="mt-2 grid grid-cols-1 gap-x-6 gap-y-2 max-h-64 overflow-y-auto pr-2">
           {startingGrid.map((driver, index) => (
             <div key={index} className="flex items-center gap-2">
